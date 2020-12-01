@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+#
+# usage: $0 [dir ...]
+
+if command -v md5sum &>/dev/null; then
+    md5="md5sum"
+else
+    md5="md5 -r"
+fi
+
+find "${@:-.}" ! -empty -type f -exec ${md5} {} + |
+sort -u |
+awk '
+  NR == 1 { prev = $0; dup=0; }
+  NR > 1 {
+     if (substr($0,0,32) == substr(prev,0,32)) {
+       print(prev);
+       dup=1;
+     } else if (dup) {
+       print(prev);
+       dup=0;
+     }
+     prev=$0;
+  }
+  END { if (dup) print(prev); }'
